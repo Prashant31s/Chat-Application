@@ -5,7 +5,6 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
  
-    // Or if using `src` directory:
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
@@ -18,7 +17,8 @@ module.exports = {
     'accent': '#b69d8b',
     'heading':'#000000',
     'joinbutton':'#3b82f6',
-    'joinbutton2':'#1e40af'
+    'joinbutton2':'#1e40af',
+    'red' :'#FF0000'
      },
     extend: {},
   },

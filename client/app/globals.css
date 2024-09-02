@@ -2,22 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Chatbox container */
-/* .chatbox {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-  }
-   */
-/* Chatbox header */
 .body {
   background-color: #333;
 }
 .chatbox h1 {
-  /* //background-color: #333; */
   text-align: center;
   font-size: 1.5rem;
   margin-bottom: 10px;
@@ -26,7 +14,7 @@
 
 /* Messages container */
 .message {
-  max-height: 50px; /* Set a fixed maximum height */
+  max-height: 50px;
   overflow-y: auto;
   padding: 10px;
   margin-left: 3px;
@@ -34,7 +22,6 @@
 
 .message ul {
   list-style-type: none;
-
   margin-bottom: 0;
   margin-left: 3px;
 }
@@ -51,11 +38,9 @@
   display: flex;
   padding: 5px 5px 5px 5px;
   box-sizing: border-box;
-  /* //margin-top: 10px; */
-  /* margin-left: 2px;
-  margin-bottom: 3px; */
 }
 
+/* message input */
 .input {
   flex: 1;
   box-sizing: border-box;
@@ -63,11 +48,10 @@
   font-size: 1rem;
   margin-left: 5px;
   margin-bottom: 6px;
-  margin-top: 8px; 
+  margin-top: 8px;
   margin-right: 2px;
   border: 2px solid;
   border-radius: 25px;
-  
 }
 
 /* Send message button */
@@ -75,22 +59,17 @@
   padding: 10px 10px 10px 10px;
   margin-left: 5px;
   margin-bottom: 6px;
-  margin-top: 8px; 
-  margin-right:10px;
+  margin-top: 8px;
+  margin-right: 10px;
   box-sizing: border-box;
   font-size: 1rem;
-  
-
   border: 2px solid;
   border-radius: 25px;
-  background-color:#db2777 ;
-  
+  background-color: #db2777;
   color: #000;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-
-
 
 .form button:hover {
   background-color: #9d174d;

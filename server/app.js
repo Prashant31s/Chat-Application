@@ -1,10 +1,11 @@
-import express from "express";
+import express from "express";  
 import { Server } from "socket.io";
 import { createServer } from "http";
 import connectDB from "./config/db.js"; // Import the database connection
-import Message from "./models/Message.js";
+import Message from "./models/Message.js"; 
 import User from "./models/User.js";
 
+//initializing express app and http server
 const app = express();
 const port = 8000;
 const server = createServer(app);
@@ -12,21 +13,43 @@ const server = createServer(app);
 // Connect to MongoDB
 connectDB();
 
+// Initialize Socket.IO server with CORS configuration
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
-    method: ["GET", "POST"],
-    credentials: true,
+    origin: "http://localhost:3000",  //allowed origin for CORS
+    method: ["GET", "POST"],          
+    credentials: true,                
   },
 });
 
 app.get("/", (req, res) => {
-  res.send("HEllo world");
+  res.send("HEllo world"); //response for the root url
 });
 
+
+//handling new socket connection
 io.on("connection", (socket) => {
+  socket.on("check-user", async (m) => {
+    try {
+      // Checking if the username already exists
+      const existingUser = await User.findOne({ userName: m.user });
+
+      if (existingUser) {
+        // If username is taken, emiting duplicate username event
+        socket.emit("duplicate-user", m);
+      } else {
+        // If username is available
+
+        socket.emit("approved-user");
+      }
+    } catch (err) {
+      console.error("Error checking or saving user:", err);
+      socket.emit("error", "Internal server error");        // emitting error message in case of failure
+    }
+  });
+
+  // Handling username registration
   socket.on("username", async (m) => {
-    console.log("exe",m.user);
     try {
       // Checking if the username already exists
       const existingUser = await User.findOne({ userName: m.user });
@@ -43,75 +66,66 @@ io.on("connection", (socket) => {
       }
     } catch (err) {
       console.error("Error checking or saving user:", err);
-      socket.emit("error", "Internal server error");
+      socket.emit("error", "Internal server error");     //emmiting error message in case of failure 
     }
   });
 
-  socket.on("message", async ({ message, room, user }) => {
-    //console.log("heloooo", { message, room, user });
+  socket.on("join-room", async (room) => {
+    socket.join(room);   //join the specified room
+    const messages = await Message.find({ room }).sort({ timestamp: 1 }); //get the history of that room if available and send it to the new user
+    io.to(room).emit("history", messages);
+  });
+
+  socket.on("message", async ({ message, room, user }) => { //triggers when a user sends a message
     const newMessage = new Message({ message, user, room });
     await newMessage.save();
     const messageId = newMessage._id;
-    console.log("iiiiiiiiddd", messageId);
-    // messageshistory.push({ nmessages: message, ruser: user, myroom:room });
-    // const messages = await Message.find({ room }).sort({ timestamp: 1 });
-
-    if (room) {
-      io.to(room).emit("receive-message", { message, user, _id: messageId });
-    } else {
-      io.emit("receive-message", { message, user, _id: messageId });
-    }
+    io.to(room).emit("receive-message", { message, user, _id: messageId }); //send info to other users in the room about message
   });
-  socket.on("join-room", async (room) => {
-    socket.join(room);
-    const messages = await Message.find({ room }).sort({ timestamp: 1 });
-    //console.log("mess", messages);
-    io.to(room).emit("history", messages);
 
-    console.log(`user joined room ${room}`);
-  });
-  socket.on("delete-message", async ({ messageId, userId }) => {
+  socket.on("delete-message", async ({ messageId, room }) => {
     try {
-      // Find the message and ensure the requesting user is the owner
+      // Find the message to be deleted from database
       const message = await Message.findOne({ _id: messageId });
       if (message) {
         await Message.deleteOne({ _id: messageId });
-        io.emit("message-deleted", { messageId });
+        io.to(room).emit("message-deleted", { messageId });
       }
     } catch (err) {
       console.error("Error deleting message:", err);
     }
   });
 
-  socket.on("edit-message", async ({ messageId, newContent, userId }) => {
-    console.log("new", newContent, messageId);
+  socket.on("edit-message", async ({ messageId, newContent, room }) => {
+    
     try {
+      //find the message to be edited
       const message = await Message.findOne({ _id: messageId });
       if (message) {
         message.message = newContent;
         await message.save();
-        io.emit("message-edited", { messageId, newContent });
+        io.to(room).emit("message-edited", { messageId, newContent });
       }
     } catch (err) {
       console.error("Error editing message:", err);
     }
   });
 
-  socket.on("back-button-leave",async (socketId)=> {
+  //handle user disconnection if the user leaves by clicking back button
+  socket.on("back-button-leave", async (socketId) => {
     try {
       // Remove the user from the database on disconnect
       await User.findOneAndDelete({ socketId: socketId });
-      console.log("User Disconnected", socketId);
     } catch (err) {
       console.error("Error removing user:", err);
     }
-  })
+  });
 
+  //handle user disconnection if the user leaves by closing tab
   socket.on("disconnect", async () => {
     try {
       // Remove the user from the database on disconnect
       await User.findOneAndDelete({ socketId: socket.id });
-      console.log("User Disconnected", socket.id);
     } catch (err) {
       console.error("Error removing user:", err);
     }
